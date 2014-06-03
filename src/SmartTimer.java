@@ -67,6 +67,7 @@ public class SmartTimer {
             public void run() {
                 TimerFrame app = new TimerFrame();
                 app.setVisible(true);
+                app.toFront();
             }
         });
     }

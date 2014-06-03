@@ -22,6 +22,9 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowStateListener;
+import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -139,21 +142,35 @@ public class HideToSystemTrayFrame extends JFrame {
 
         addWindowStateListener(new WindowStateListener() {
             public void windowStateChanged(WindowEvent e) {
+                System.out.println(e.getNewState());
                 switch (e.getNewState()) {
                     case ICONIFIED:
                     case 7:
                         try {
+                            if(isAlwaysOnTop()) {
+                                toFront();
+                                Thread.sleep(100);
+                                
+                            } else {
+                                setVisible(false);
+                                if(!Arrays.asList(tray.getTrayIcons()).contains(trayIcon)) {
                             tray.add(trayIcon);
-                            setVisible(false);
+                            }
+                            }
                             System.out.println("added to SystemTray");
                         } catch (AWTException ex) {
                             System.out.println("unable to add to tray");
-                        }
+                        } catch (InterruptedException ex) {
+                    Logger.getLogger(HideToSystemTrayFrame.class.getName()).log(Level.SEVERE, null, ex);
+                }
                         break;
                     case MAXIMIZED_BOTH:
                     case NORMAL:
+                        if(!Arrays.asList(tray.getTrayIcons()).contains(trayIcon)) {
                         tray.remove(trayIcon);
+                        }
                         setVisible(true);
+                        toFront();
                         System.out.println("Tray icon removed");
                     default:
                 }
@@ -170,7 +187,9 @@ public class HideToSystemTrayFrame extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 //processWindowStateEvent(new WindowEvent(HideToSystemTrayFrame.this,WindowEvent.WINDOW_ICONIFIED));
                 try {
+                    if(!Arrays.asList(tray.getTrayIcons()).contains(trayIcon)) {
                     tray.add(trayIcon);
+                    }
                     setVisible(false);
                     System.out.println("added to SystemTray");
                 } catch (AWTException ex) {

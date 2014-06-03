@@ -59,10 +59,10 @@ public class ClientTimerPanel extends ClientPanel {
                 }
             }
         });
-        timeArea.add(hoursLabel);
         timeArea.add(hoursSpinner);
-        timeArea.add(minutesLabel);
+        timeArea.add(hoursLabel);
         timeArea.add(minutesSpinner);
+        timeArea.add(minutesLabel);
 
         setClientName(clientName, false);
 

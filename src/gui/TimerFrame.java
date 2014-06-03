@@ -36,13 +36,16 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellReference;
-import win32.Win32IdleTime;
+//import win32.Win32IdleTime;
 
 /**
  *
  * @author Tiffany
  */
 public class TimerFrame extends HideToSystemTrayFrame {
+    public enum State {
+         UNKNOWN, ONLINE, IDLE, AWAY
+     };
 
     // Variables declaration
     private int currentClientIndex;
@@ -63,7 +66,7 @@ public class TimerFrame extends HideToSystemTrayFrame {
     private SequentialGroup mainPanelVerticalContent;
     private ParallelGroup mainPanelHorizontalContent;
     private boolean pause;
-    private Win32IdleTime.State state = Win32IdleTime.State.UNKNOWN;
+    private State state = State.UNKNOWN;
     private GregorianCalendar lastUpdateDate;
     ClientPanel activeClient;
     // End of variables declaration
@@ -172,7 +175,8 @@ public class TimerFrame extends HideToSystemTrayFrame {
                         //.addComponent(totalNonWorkingTimeLabel)
                         //.addGap(26, 26, 26)
                         //.addComponent(totalNonWorkingTimeValueLabel)
-                        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        //.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                )
         );
         mainPanelVerticalContent = mainPanelLayout.createSequentialGroup();
         mainPanelLayout.setVerticalGroup(
@@ -208,7 +212,7 @@ public class TimerFrame extends HideToSystemTrayFrame {
                 .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(mainPanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                 .addComponent(plusButton)
                                 .addComponent(exportButton)
@@ -248,8 +252,10 @@ public class TimerFrame extends HideToSystemTrayFrame {
         clients.add(newClient.getActivationCheckBox());
 
         mainPanelVerticalContent.addComponent(newClient, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE);
+                .addContainerGap();
         mainPanelHorizontalContent.addComponent(newClient, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE);
+        revalidate();
+        pack();
     }
 
     private void initTimer() {
@@ -268,11 +274,11 @@ public class TimerFrame extends HideToSystemTrayFrame {
                 totalTime.addTotalMilliseconds(idleMilliSec);
                 totalTimeValueLabel.setText(totalTime.toFullString());
                 //int quantity = 0;
-                Win32IdleTime.State newState = pause
-                        ? Win32IdleTime.State.AWAY : idleMilliSec < 30 * 1000
-                        ? Win32IdleTime.State.ONLINE : idleMilliSec > 5 * 60 * 1000
-                        ? Win32IdleTime.State.AWAY : Win32IdleTime.State.IDLE;
-                if (newState != Win32IdleTime.State.AWAY) {
+                State newState = pause
+                        ? State.AWAY : idleMilliSec < 30 * 1000
+                        ? State.ONLINE : idleMilliSec > 5 * 60 * 1000
+                        ? State.AWAY : State.IDLE;
+                if (newState != State.AWAY) {
                     for (int i = 0; i < clientPanels.size(); i++) {
                         ClientPanel c = clientPanels.get(i);
                         if (c.isActive()) {
@@ -280,10 +286,10 @@ public class TimerFrame extends HideToSystemTrayFrame {
                         }
                     }
                 }
-                if (newState != state && newState == Win32IdleTime.State.AWAY) {//new state is "away"
+                if (newState != state && newState == State.AWAY) {//new state is "away"
                     totalAwayTime = new Duration();
                 }
-                if (state == Win32IdleTime.State.AWAY) {//old state was "away"
+                if (state == State.AWAY) {//old state was "away"
                     totalAwayTime.addTotalMilliseconds(idleMilliSec);
                     if (newState != state && totalAwayTime.getMinutes() > 0) {//current state is no longer "away" and have been for at least one minute
                         //open dialog and ask how to distribute time between activities and non-working time
@@ -353,10 +359,13 @@ public class TimerFrame extends HideToSystemTrayFrame {
         hRate.createCell(0).setCellValue(SHEET_HOURLYRATE);
         hRate.createCell(1).setCellValue(hourlyRate);
 
+        headerRow++;//on saute une ligne
+        
         Row header = sheet.createRow(headerRow++);
         header.createCell(0).setCellValue(SHEET_CLIENT);
         header.createCell(1).setCellValue(SHEET_TIME);
         header.createCell(2).setCellValue(SHEET_COST);
+        
         for (int i = 0; i < clientPanels.size(); i++) {
             //Create a new row in current sheet
             Row row = sheet.createRow(i + headerRow);
@@ -400,14 +409,17 @@ public class TimerFrame extends HideToSystemTrayFrame {
     }
 
     protected void hideAccessoryStuff(boolean hide) {
+        CLIENTTIME_DATEFORMAT = hide ? CLIENTTIME_MINIMIZED_DATEFORMAT : CLIENTTIME_MAXIMIZED_DATEFORMAT;
         pauseButton.setVisible(!hide);
         exportButton.setVisible(!hide);
         plusButton.setVisible(!hide);
-        totalTimeLabel.setVisible(!hide);
-        totalTimeValueLabel.setVisible(!hide);
-        CLIENTTIME_DATEFORMAT = hide ? CLIENTTIME_MINIMIZED_DATEFORMAT : CLIENTTIME_MAXIMIZED_DATEFORMAT;
+        totalTimeLabel.setVisible(!hide || pause);
+        totalTimeValueLabel.setVisible(!hide || pause);
+        totalTimeValueLabel.setText(totalTime.toFullString());
         for (ClientPanel c : clientPanels) {
-            c.setVisible(!hide || c.isActive());
+            boolean masquer = (pause && hide) || (!pause && hide && !c.isActive());
+            c.setVisible(!masquer);
+            c.updateTime();
         }
     }
 }
