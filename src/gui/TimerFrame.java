@@ -48,24 +48,21 @@ public class TimerFrame extends HideToSystemTrayFrame {
      };
 
     // Variables declaration
-    private int currentClientIndex;
     private LinkedList<ClientPanel> clientPanels;
     private ButtonGroup clients;
     private JPanel mainPanel;
     private JButton plusButton;
     private JButton exportButton;
     private JButton pauseButton;
-    private JLabel totalNonWorkingTimeLabel;
-    private JLabel totalNonWorkingTimeValueLabel;
     private JLabel totalTimeLabel;
     private JLabel totalTimeValueLabel;
     private Duration totalTime;
-    private Duration totalNonWorkingTime;
     private Duration totalAwayTime;
     private Timer timer;
     private SequentialGroup mainPanelVerticalContent;
     private ParallelGroup mainPanelHorizontalContent;
     private boolean pause;
+    private boolean alwaysShowFullFormat;
     private State state = State.UNKNOWN;
     private GregorianCalendar lastUpdateDate;
     ClientPanel activeClient;
@@ -118,7 +115,6 @@ public class TimerFrame extends HideToSystemTrayFrame {
 
     private void initComponents() {
         totalTime = new Duration();
-        totalNonWorkingTime = new Duration();
         totalAwayTime = new Duration();
 
         mainPanel = new JPanel();
@@ -133,6 +129,7 @@ public class TimerFrame extends HideToSystemTrayFrame {
         clients = new ButtonGroup();
 
         pause = false;
+        alwaysShowFullFormat = false;
 
         plusButton.setText(PLUSBUTTON_TEXT);
         plusButton.addActionListener(new java.awt.event.ActionListener() {
@@ -233,7 +230,6 @@ public class TimerFrame extends HideToSystemTrayFrame {
         addClient(NONWORKINGTIMELABEL_TEXT, false);
         addClient("client 1", true);
 
-        currentClientIndex = 0;
         clientPanels.get(0).getActivationCheckBox().setSelected(true);
     }
 
@@ -409,7 +405,7 @@ public class TimerFrame extends HideToSystemTrayFrame {
     }
 
     protected void hideAccessoryStuff(boolean hide) {
-        CLIENTTIME_DATEFORMAT = hide ? CLIENTTIME_MINIMIZED_DATEFORMAT : CLIENTTIME_MAXIMIZED_DATEFORMAT;
+        CLIENTTIME_DATEFORMAT = (hide && !alwaysShowFullFormat) ? CLIENTTIME_MINIMIZED_DATEFORMAT : CLIENTTIME_MAXIMIZED_DATEFORMAT;
         pauseButton.setVisible(!hide);
         exportButton.setVisible(!hide);
         plusButton.setVisible(!hide);

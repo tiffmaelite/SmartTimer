@@ -15,10 +15,11 @@ public class ClientTimerPanel extends ClientPanel {
     private JLabel minutesLabel;
     private JSpinner minutesSpinner;
     private JLabel hoursLabel;
+    private Duration totalTime;
 
-    public ClientTimerPanel(Duration totalTime, String clientName) {
-        super(totalTime, clientName);
-
+    public ClientTimerPanel(Duration totTime, String clientName) {
+        super(totTime, clientName);
+        totalTime = totalTime;
         hoursSpinner = new JSpinner();
         hoursLabel = new JLabel();
         minutesSpinner = new JSpinner();
@@ -33,13 +34,7 @@ public class ClientTimerPanel extends ClientPanel {
         hoursSpinner.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                int h = (Integer) hoursSpinner.getValue();
-                if (h <= ClientTimerPanel.this.maxTime.getHours()) {
-                    time.setHours(h);
-                    maxTime.addHours(time.getHours()-h);
-                } else {
-                    hoursSpinner.setValue(new Integer(time.getHours()));
-                }
+                checkTime();
             }
         });
 
@@ -49,14 +44,7 @@ public class ClientTimerPanel extends ClientPanel {
         minutesSpinner.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                int m = (Integer) minutesSpinner.getValue();
-                int h = (Integer) hoursSpinner.getValue();
-                if (h < ClientTimerPanel.this.maxTime.getHours() || m <= ClientTimerPanel.this.maxTime.getMinutes()) {
-                    time.setMinutes(m);
-                    maxTime.addMinutes(time.getMinutes()-m);
-                } else {
-                    minutesSpinner.setValue(new Integer(time.getMinutes()));
-                }
+                checkTime();
             }
         });
         timeArea.add(hoursSpinner);
@@ -80,4 +68,24 @@ public class ClientTimerPanel extends ClientPanel {
         super.updateTime();
     }
 
+    private void checkTime() {
+        int m = (Integer) minutesSpinner.getValue();
+        int diffM = m - time.getMinutes();
+        int h = (Integer) hoursSpinner.getValue();
+        int diffH = h - time.getHours();
+        if (diffM >= 60) {
+            diffM = diffM % 60;
+            diffH = diffH + ((int) diffM / 60);
+        }
+        if ((h < maxTime.getHours() && totalTime.getHours() + diffH < maxTime.getHours()) //hour would stay strictly inferior to maximum hour
+                || ((h == maxTime.getHours() || totalTime.getHours() + diffH == maxTime.getHours())
+                && (m <= maxTime.getMinutes() && totalTime.getMinutes() + diffM <= maxTime.getMinutes()))) {//hour would be equal to maximum hour and minute would stay inferior or equal to maximum minute
+            time.setMinutes(m);
+            totalTime.addMinutes(diffM);
+            totalTime.addHours(diffH);
+        } else {//new time is invalid
+            hoursSpinner.setValue(new Integer(time.getHours()));
+            minutesSpinner.setValue(new Integer(time.getMinutes()));
+        }
+    }
 }
