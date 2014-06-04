@@ -17,9 +17,9 @@ public class ClientTimerPanel extends ClientPanel {
     private JLabel hoursLabel;
     private Duration totalTime;
 
-    public ClientTimerPanel(Duration totTime, String clientName) {
-        super(totTime, clientName);
-        totalTime = totalTime;
+    public ClientTimerPanel(Duration maxTime, Duration totTime, String clientName) {
+        super(maxTime, clientName);
+        totalTime = totTime;
         hoursSpinner = new JSpinner();
         hoursLabel = new JLabel();
         minutesSpinner = new JSpinner();
@@ -69,6 +69,7 @@ public class ClientTimerPanel extends ClientPanel {
     }
 
     private void checkTime() {
+        System.out.println("\n"+time+" "+maxTime+" "+totalTime);
         int m = (Integer) minutesSpinner.getValue();
         int diffM = m - time.getMinutes();
         int h = (Integer) hoursSpinner.getValue();
@@ -84,8 +85,9 @@ public class ClientTimerPanel extends ClientPanel {
             totalTime.addMinutes(diffM);
             totalTime.addHours(diffH);
         } else {//new time is invalid
-            hoursSpinner.setValue(new Integer(time.getHours()));
-            minutesSpinner.setValue(new Integer(time.getMinutes()));
+            hoursSpinner.setValue(time.getHours());
+            minutesSpinner.setValue(time.getMinutes());
         }
+        System.out.println(time+" "+maxTime+" "+totalTime);
     }
 }

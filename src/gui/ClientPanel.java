@@ -103,6 +103,10 @@ public class ClientPanel extends JPanel {
     public int getMinutes() {
         return time.getMinutes();
     }
+    
+    public int getSeconds() {
+        return time.getSeconds();
+    }
 
     public void setClientName(String name, boolean editable) {
         nameField.setText(name);

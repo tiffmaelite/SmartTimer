@@ -3,6 +3,7 @@ import gui.TimerFrame;
 import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.MenuItem;
@@ -66,6 +67,8 @@ public class SmartTimer {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 TimerFrame app = new TimerFrame();
+                Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();//returns screensize and window bounds (considering inner margins and task bars)
+                app.setLocation(((int)(bounds.getMaxX()-app.getWidth()-40)), ((int)(bounds.getMaxY()-app.getHeight()-200)));
                 app.setVisible(true);
                 app.toFront();
             }

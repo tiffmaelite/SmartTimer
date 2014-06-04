@@ -22,18 +22,17 @@ public class AwayTimerDialog extends JDialog implements ActionListener {
     AwayTimerDialog(TimerFrame frame, Duration totalAwayTime) {
         super((JFrame) frame);
         mainFrame = frame;
-        setTitle("You have been away for " + totalAwayTime.getDecimalHours() + " hour(s).");
+        setTitle("You have been away for " + totalAwayTime.toDecimalHourString()+ " hour(s).");
         
         getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
         
         add(new JLabel("You have been away for " + totalAwayTime.getHours() + " hour(s) and " + totalAwayTime.getMinutes() + " minute(s). How did you spend this time?"));
         
         clients = new LinkedList<ClientTimerPanel>();
-        //Duration remainingAwayTime = new Duration();
-        //remainingAwayTime.setSeconds(totalAwayTime.getHours()*3600+totalAwayTime.getMinutes()&60+totalAwayTime.getSeconds());
+        Duration remainingAwayTime = new Duration();
         for (int i = 0; i < mainFrame.getNbClients(); i++) {
             ClientPanel clientPanel = mainFrame.getClient(i);
-            ClientTimerPanel cp = new ClientTimerPanel(totalAwayTime, clientPanel.getClientName());
+            ClientTimerPanel cp = new ClientTimerPanel(totalAwayTime, remainingAwayTime, clientPanel.getClientName());
             clients.add(cp);
             add(cp);
         }
@@ -44,6 +43,7 @@ public class AwayTimerDialog extends JDialog implements ActionListener {
         
      pack();
      setVisible(true);
+     setLocationRelativeTo(frame);
   }
 
   public void actionPerformed(ActionEvent e) {
@@ -53,7 +53,7 @@ public class AwayTimerDialog extends JDialog implements ActionListener {
     @Override
     public void dispose() {
         for (int i = 0; i < mainFrame.getNbClients(); i++) {
-            mainFrame.getClient(i).incrementTime(clients.get(i).getHours() * 60 + clients.get(i).getMinutes());
+            mainFrame.getClient(i).incrementTime(1000*(clients.get(i).getHours() * 3600 + clients.get(i).getMinutes() *60 + clients.get(i).getSeconds()));
         }
         super.dispose();
     }

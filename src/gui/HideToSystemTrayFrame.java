@@ -7,6 +7,8 @@ import java.awt.Dimension;
 import static java.awt.Frame.ICONIFIED;
 import static java.awt.Frame.MAXIMIZED_BOTH;
 import static java.awt.Frame.NORMAL;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.MenuItem;
 import java.awt.Point;
@@ -27,6 +29,8 @@ import java.awt.event.WindowStateListener;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -216,6 +220,7 @@ public class HideToSystemTrayFrame extends JFrame {
     protected void initMenuBar() {
         menuBar = new JMenuBar();
         JMenu options = new JMenu("Options");
+        options.setIcon(new ImageIcon(getIconImage().getScaledInstance(20, 20,Image.SCALE_SMOOTH)));
         JMenuItem minimizeItem = new JMenuItem("Iconify to system tray");
         minimizeItem.addActionListener(new ActionListener() {
             @Override
@@ -283,8 +288,10 @@ public class HideToSystemTrayFrame extends JFrame {
      * @see http://book.javanb.com/swing-hacks/swinghacks-chp-5-sect-9.html
      */
     protected void minimizedVersion() {
-        normal_location = getLocation();
-        normal_size = getSize();
+        if(!minimized) {
+            normal_location = getLocation();
+            normal_size = getSize();
+        }
         hideAccessoryStuff(true);
         revalidate();
         pack();
