@@ -5,6 +5,8 @@ package gui;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -25,12 +27,14 @@ import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.ParallelGroup;
 import javax.swing.GroupLayout.SequentialGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
+import javax.swing.event.ChangeListener;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
@@ -417,5 +421,18 @@ public class TimerFrame extends HideToSystemTrayFrame {
             c.setVisible(!masquer);
             c.updateTime();
         }
+    }
+
+    @Override
+    protected void initMenuBar() {
+        super.initMenuBar();
+        JCheckBoxMenuItem alwaysFullFormatItem = new JCheckBoxMenuItem("Always show full-time");
+        alwaysFullFormatItem.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                alwaysShowFullFormat = ((JCheckBoxMenuItem) e.getSource()).isSelected();
+            }
+        });
+        menuBar.getMenu(0).add(alwaysFullFormatItem);
     }
 }
