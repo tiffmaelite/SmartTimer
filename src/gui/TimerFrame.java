@@ -118,7 +118,7 @@ public class TimerFrame extends HideToSystemTrayFrame {
      * Creates new form NewJFrame
      */
     public TimerFrame() {
-        super("SmartTimer", "images/wheel.png");
+        super("SmartTimer", "src/images/wheel.png");
 
         initComponents();
         /*for (Component c : this.getComponents()) {
