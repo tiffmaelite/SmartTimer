@@ -18,6 +18,7 @@ import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
@@ -27,6 +28,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowStateListener;
 import java.util.Arrays;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Icon;
@@ -38,6 +40,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import java.util.Timer;
 import javax.swing.UIManager;
 
 /**
@@ -74,6 +77,26 @@ public class HideToSystemTrayFrame extends JFrame {
             public void mousePressed(MouseEvent e) {
                 normal_location.x = e.getX();
                 normal_location.y = e.getY();
+            }
+
+            public void mouseEntered(MouseEvent e) {
+                if (minimized) {
+                   menuBar.setVisible(true);
+                   pack();
+                }
+            }
+
+            public void mouseExited(MouseEvent e) {
+                if (minimized) {
+                    Timer waitTimer = new Timer();
+                    waitTimer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            menuBar.setVisible(!minimized);//reste correct si la valeur de minimized change entre-temps
+                            pack();
+                        }
+                    }, 2000);
+                }
             }
         });
         addMouseMotionListener(new MouseMotionAdapter() {
@@ -220,7 +243,7 @@ public class HideToSystemTrayFrame extends JFrame {
     protected void initMenuBar() {
         menuBar = new JMenuBar();
         JMenu options = new JMenu("Options");
-        options.setIcon(new ImageIcon(getIconImage().getScaledInstance(20, 20,Image.SCALE_SMOOTH)));
+        options.setIcon(new ImageIcon(getIconImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH)));
         JMenuItem minimizeItem = new JMenuItem("Iconify to system tray");
         minimizeItem.addActionListener(new ActionListener() {
             @Override
@@ -243,6 +266,9 @@ public class HideToSystemTrayFrame extends JFrame {
                     ((JMenuItem) e.getSource()).setText("Maximize");
                 }
                 minimized = !minimized;
+                if(!minimized) {
+                    menuBar.setVisible(true);
+                }
             }
         });
 
@@ -288,7 +314,7 @@ public class HideToSystemTrayFrame extends JFrame {
      * @see http://book.javanb.com/swing-hacks/swinghacks-chp-5-sect-9.html
      */
     protected void minimizedVersion() {
-        if(!minimized) {
+        if (!minimized) {
             normal_location = getLocation();
             normal_size = getSize();
         }

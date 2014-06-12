@@ -288,8 +288,8 @@ public class TimerFrame extends HideToSystemTrayFrame {
                 //int quantity = 0;
                 int idleMillis = Win32IdleTime.getIdleTimeMillisWin32();
                 int delay = (int) Math.max(idleMillis, delaySinceLastUpdate);
-                State newState = (pause || delay >= 5 * 60 * 1000)
-                        ? State.AWAY : delay >= 30 * 1000
+                State newState = (pause || delay >= 10 * 60 * 1000)
+                        ? State.AWAY : delay >= 2 * 60 * 1000
                         ? State.IDLE : State.ONLINE;
                 System.out.println(idleMillis + " " + delaySinceLastUpdate);
                 if (newState != state && newState == State.AWAY) {//new state is "away", and it is really new
