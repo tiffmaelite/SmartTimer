@@ -126,4 +126,6 @@ public class ClientPanel extends JPanel {
         return activeCheckBox;
     }
 
+    public Duration getDuration() { return time; }
+
 }

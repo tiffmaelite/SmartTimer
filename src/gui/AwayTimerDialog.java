@@ -30,13 +30,15 @@ public class AwayTimerDialog extends JDialog implements ActionListener {
         
         clients = new LinkedList<ClientTimerPanel>();
         Duration remainingAwayTime = new Duration();
-        for (int i = 0; i < mainFrame.getNbClients(); i++) {
+        for (int i = 1; i < mainFrame.getNbClients(); i++) {
             ClientPanel clientPanel = mainFrame.getClient(i);
             ClientTimerPanel cp = new ClientTimerPanel(totalAwayTime, remainingAwayTime, clientPanel.getClientName());
             clients.add(cp);
             add(cp);
         }
-        
+
+        JLabel warningLabel = new JLabel("Remaining time will be considered as non-working time.\n");
+        add(warningLabel);
         JButton button = new JButton("Close");
         button.addActionListener(this);
         add(button);
@@ -52,8 +54,8 @@ public class AwayTimerDialog extends JDialog implements ActionListener {
 
     @Override
     public void dispose() {
-        for (int i = 0; i < mainFrame.getNbClients(); i++) {
-            mainFrame.getClient(i).incrementTime(1000*(clients.get(i).getHours() * 3600 + clients.get(i).getMinutes() *60 + clients.get(i).getSeconds()));
+        for (int i = 1; i < mainFrame.getNbClients(); i++) {
+            mainFrame.getClient(i).incrementTime(1000*(clients.get(i-1).getHours() * 3600 + clients.get(i-1).getMinutes() *60 + clients.get(i-1).getSeconds()));
         }
         super.dispose();
     }

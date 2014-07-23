@@ -95,7 +95,7 @@ public class HideToSystemTrayFrame extends JFrame {
                             menuBar.setVisible(!minimized);//reste correct si la valeur de minimized change entre-temps
                             pack();
                         }
-                    }, 2000);
+                    }, 1000);
                 }
             }
         });
@@ -242,8 +242,11 @@ public class HideToSystemTrayFrame extends JFrame {
 
     protected void initMenuBar() {
         menuBar = new JMenuBar();
-        JMenu options = new JMenu("Options");
-        options.setIcon(new ImageIcon(getIconImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH)));
+        JMenu mainMenu = new JMenu("");
+        mainMenu.setIcon(new ImageIcon(getIconImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH)));
+        JMenu windowMenu = new JMenu("Window");
+        JMenu optionsMenu = new JMenu("Options");
+
         JMenuItem minimizeItem = new JMenuItem("Iconify to system tray");
         minimizeItem.addActionListener(new ActionListener() {
             @Override
@@ -282,13 +285,15 @@ public class HideToSystemTrayFrame extends JFrame {
         JMenuItem exitItem = new JMenuItem("Close");
         exitItem.addActionListener(exitActionListener);
 
-        options.add(miniItem);
-        options.add(minimizeItem);
-        options.add(topItem);
-        options.add(aboutItem);
-        options.add(exitItem);
+        windowMenu.add(miniItem);
+        windowMenu.add(minimizeItem);
+        optionsMenu.add(topItem);
+        windowMenu.add(aboutItem);
+        windowMenu.add(exitItem);
 
-        menuBar.add(options);
+        menuBar.add(mainMenu);
+        menuBar.add(optionsMenu);
+        menuBar.add(windowMenu);
         setJMenuBar(menuBar);
     }
 

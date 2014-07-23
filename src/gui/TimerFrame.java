@@ -88,6 +88,8 @@ public class TimerFrame extends HideToSystemTrayFrame {
     protected ClientPanel activeClient;
     private HashMap<String, Color> colors;
     private HashMap<String,MetalTheme> themes;
+    private int awayDelay = 10 * 60 * 1000;
+    private int idleDelay = 2 * 60 * 1000;
     // End of variables declaration
 
     // Text strings and formats declaration
@@ -288,22 +290,15 @@ public class TimerFrame extends HideToSystemTrayFrame {
                 //int quantity = 0;
                 int idleMillis = Win32IdleTime.getIdleTimeMillisWin32();
                 int delay = (int) Math.max(idleMillis, delaySinceLastUpdate);
-                State newState = (pause || delay >= 10 * 60 * 1000)
-                        ? State.AWAY : delay >= 2 * 60 * 1000
+                State newState = (pause || delay >= awayDelay)
+                        ? State.AWAY : delay >= idleDelay
                         ? State.IDLE : State.ONLINE;
-                System.out.println(idleMillis + " " + delaySinceLastUpdate);
-                if (newState != state && newState == State.AWAY) {//new state is "away", and it is really new
-                    totalAwayTime = new Duration();
-                    if (idleMillis > delaySinceLastUpdate) {
-                        totalAwayTime.setTotalMilliseconds(idleMillis);
-                        //now = lastUpdateDate;
-                    }
-                }
                 if (state == State.AWAY) {//old state was "away"
-                    if (pause || idleMillis <= delaySinceLastUpdate) {
+                    if (pause || idleMillis <= delaySinceLastUpdate) {//delay == delaySinceLastUpdate
                         totalAwayTime.addTotalMilliseconds(delaySinceLastUpdate);
+                    } else {// if (!pause && delay == idleMillis && delay != delaySinceLastUpdate)
+                        totalAwayTime.setTotalMilliseconds(idleMillis);
                     }
-                    System.out.println(totalAwayTime + " // " + (new SimpleDateFormat("dd-mm-yy HH:mm:ss")).format(new Date()));
                     if (newState != state && totalAwayTime.getMinutes() > 0) {//current state is no longer "away" and have been for at least one minute
                         //open dialog and ask how to distribute time between activities and non-working time
                         AwayTimerDialog timeDistributer = new AwayTimerDialog(TimerFrame.this, totalAwayTime);
@@ -324,23 +319,27 @@ public class TimerFrame extends HideToSystemTrayFrame {
                             public void windowClosed(WindowEvent e) {
                                 activeClient.getActivationCheckBox().setSelected(true);
                                 super.windowClosed(e);
+                                totalAwayTime = new Duration();//reset duration
                             }
                         });
                         timeDistributer.setVisible(true);
                     }
                 }
                 if (newState != State.AWAY) {
-                    for (int i = 0; i < clientPanels.size(); i++) {
+                    long maxWorkingMillis = 0;
+                    for (int i = 1; i < clientPanels.size(); i++) {
                         ClientPanel c = clientPanels.get(i);
                         if (c.isActive()) {
                             c.incrementTime(delaySinceLastUpdate);
                         }
+                        maxWorkingMillis += c.getDuration().getTotalMilliseconds();
                     }
+                    clientPanels.getFirst().getDuration().setTotalMilliseconds(totalTime.getTotalMilliseconds()-maxWorkingMillis);
+                    clientPanels.getFirst().updateTime();
                 }
 
                 state = newState;
                 lastUpdateDate = now;
-                //TODO: si pas en pause : nonworkingtime = totaltime - maxworkingtime
             }
         }, 0, period);
     }
@@ -458,9 +457,32 @@ public class TimerFrame extends HideToSystemTrayFrame {
                 }
             }
         });
-        menuBar.getMenu(0).add(alwaysFullFormatItem);
+        menuBar.getMenu(1).add(alwaysFullFormatItem);
+        JMenu awayTimeMenu = new JMenu("Idle duration");
+        ButtonGroup timeItems = new ButtonGroup();
+        ItemListener timeItemListener = new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                try {
+                    awayDelay = Integer.parseInt(((JMenuItem) e.getItem()).getText().replaceAll("[^0-9]", ""));
+                } catch (NumberFormatException nfex) {
+                    Logger.getLogger(TimerFrame.class.getName()).log(Level.SEVERE, null, nfex);
+                }
+                if(idleDelay >= awayDelay) {
+                    idleDelay = awayDelay - 1;
+                }
+            }
+        };
+        for(int i = 1; i <= 6; i++) {
+            JRadioButtonMenuItem timeItem = new JRadioButtonMenuItem((5 * i) + " minutes");
+            timeItem.addItemListener(timeItemListener);
+            timeItems.add(timeItem);
+            awayTimeMenu.add(timeItem);
+        }
+        awayTimeMenu.getItem(1).setSelected(true);
+        menuBar.getMenu(1).add(awayTimeMenu);
+        JMenu colorMenu = new JMenu("Color");
         if ("Nimbus".equals(UIManager.getLookAndFeel().getName())) {
-            JMenu colorMenu = new JMenu("Color");
             ButtonGroup colorItems = new ButtonGroup();
             colors = new HashMap<String, Color>();
             colors.put("Default", UIManager.getLookAndFeelDefaults().getColor("control"));
@@ -496,9 +518,7 @@ public class TimerFrame extends HideToSystemTrayFrame {
                     colorItem.setSelected(true);
                 }
             }
-            menuBar.add(colorMenu);
         } else if ("Metal".equals(UIManager.getLookAndFeel().getName())) {
-            JMenu colorMenu = new JMenu("Color");
             ButtonGroup colorItems = new ButtonGroup();
             themes = new HashMap<String, MetalTheme>();
             String metal = "Metal";
@@ -532,8 +552,8 @@ public class TimerFrame extends HideToSystemTrayFrame {
                     colorItem.setSelected(true);
                 }
             }
-            menuBar.add(colorMenu);
         }
+        menuBar.getMenu(1).add(colorMenu);
     }
 
     private static Color computeMeanColor(Color c1, Color c2) {

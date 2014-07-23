@@ -92,6 +92,8 @@ public class Duration {
         totalMilliseconds = ms;
         setSeconds((int)(totalMilliseconds/1000));
     }
+
+    public long getTotalMilliseconds() { return totalMilliseconds; }
     
     public void addTotalMilliseconds(long ms) {
         setTotalMilliseconds(totalMilliseconds + ms);
