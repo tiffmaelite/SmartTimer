@@ -2,18 +2,9 @@ package gui;
 
 //import com.ha.common.windows.StandByDetector;
 //import com.ha.common.windows.StandByRequestListener;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -25,24 +16,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.ButtonGroup;
-import javax.swing.GroupLayout;
+import javax.swing.*;
 import javax.swing.GroupLayout.ParallelGroup;
 import javax.swing.GroupLayout.SequentialGroup;
-import javax.swing.JButton;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JTextField;
-import javax.swing.LayoutStyle;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.WindowConstants;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
@@ -50,8 +26,10 @@ import javax.swing.plaf.metal.MetalTheme;
 import javax.swing.plaf.metal.OceanTheme;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.poifs.filesystem.NPOIFSFileSystem;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellReference;
 import win32.Win32IdleTime;
 //import win32.Win32IdleTime;
@@ -102,6 +80,7 @@ public class TimerFrame extends HideToSystemTrayFrame {
     //private static final SimpleDateFormat TOTALTIMEVALUELABEL_DATEFORMAT = new SimpleDateFormat("HH 'h' mm");
     private static final String NONWORKINGTIMELABEL_TEXT = "Non-working time";
     private static final SimpleDateFormat SHEET_DATEFORMAT = new SimpleDateFormat("dd-MM-yy");
+    private static final SimpleDateFormat SHEET_HOURFORMAT = new SimpleDateFormat("hhmm");
     private static final String SHEET_CLIENT = "Activity";
     private static final String SHEET_TIME = "Time";
     private static final String SHEET_HOURLYRATE = "Hourly rate";
@@ -361,43 +340,47 @@ public class TimerFrame extends HideToSystemTrayFrame {
 
     /**
      * @see http://viralpatel.net/blogs/java-read-write-excel-file-apache-poi/
+     */
+    private void writeExcelWorkbook(HSSFWorkbook workbook, GregorianCalendar today){
+        String sheetName = SHEET_HOURFORMAT.format(today.getTime());
+        if(workbook.getSheet(sheetName) != null) {
+            workbook.removeSheetAt(workbook.getSheetIndex(sheetName));
+        }
+        HSSFSheet sheet = workbook.createSheet(sheetName);
+        int headerRow = 0;
+        //Create a new row in current sheet
+        Row hRate = sheet.createRow(headerRow++);
+        int hourlyRate = 1;
+        //Create a new cell in current row
+        hRate.createCell(0).setCellValue(SHEET_HOURLYRATE);
+        hRate.createCell(1).setCellValue(hourlyRate);
+
+        headerRow++;//on saute une ligne
+
+        Row header = sheet.createRow(headerRow++);
+        header.createCell(0).setCellValue(SHEET_CLIENT);
+        header.createCell(1).setCellValue(SHEET_TIME);
+        header.createCell(2).setCellValue(SHEET_COST);
+
+        for (int i = 0; i < clientPanels.size(); i++) {
+            //Create a new row in current sheet
+            Row row = sheet.createRow(i + headerRow);
+
+            ClientPanel p = clientPanels.get(i);
+            //Activity
+            row.createCell(0).setCellValue(p.getClientName());
+            //Hours, in decimal format
+            Cell hoursCell = row.createCell(1);
+            hoursCell.setCellValue(p.getDecimalHours());
+            //Cost
+            row.createCell(2).setCellFormula((new CellReference(hRate.getCell(1))).formatAsString() + "*" + (new CellReference(hoursCell)).formatAsString());
+        }
+    }
+    /**
      * @param evt
      */
     private void exportButtonActionPerformed(ActionEvent evt) {
-        if (pause) {
-            pause = false;
-        } else {
-            HSSFWorkbook workbook = new HSSFWorkbook();
-            GregorianCalendar today = new GregorianCalendar();
-            HSSFSheet sheet = workbook.createSheet(SHEET_DATEFORMAT.format(today.getTime()));
-            int headerRow = 0;
-            //Create a new row in current sheet
-            Row hRate = sheet.createRow(headerRow++);
-            int hourlyRate = 1;
-            //Create a new cell in current row
-            hRate.createCell(0).setCellValue(SHEET_HOURLYRATE);
-            hRate.createCell(1).setCellValue(hourlyRate);
-
-            headerRow++;//on saute une ligne
-
-            Row header = sheet.createRow(headerRow++);
-            header.createCell(0).setCellValue(SHEET_CLIENT);
-            header.createCell(1).setCellValue(SHEET_TIME);
-            header.createCell(2).setCellValue(SHEET_COST);
-
-            for (int i = 0; i < clientPanels.size(); i++) {
-                //Create a new row in current sheet
-                Row row = sheet.createRow(i + headerRow);
-
-                ClientPanel p = clientPanels.get(i);
-                //Activity
-                row.createCell(0).setCellValue(p.getClientName());
-                //Hours, in decimal format
-                Cell hoursCell = row.createCell(1);
-                hoursCell.setCellValue(p.getDecimalHours());
-                //Cost
-                row.createCell(2).setCellFormula((new CellReference(hRate.getCell(1))).formatAsString() + "*" + (new CellReference(hoursCell)).formatAsString());
-            }
+        GregorianCalendar today = new GregorianCalendar();
             try {
                 JFileChooser chooser = new JFileChooser();
                 chooser.setCurrentDirectory(new java.io.File("."));
@@ -405,27 +388,58 @@ public class TimerFrame extends HideToSystemTrayFrame {
                 chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 // disable the "All files" option.
                 chooser.setAcceptAllFileFilterUsed(false);
-                //    
                 if (chooser.showOpenDialog(TimerFrame.this) == JFileChooser.APPROVE_OPTION) {
                     //Note getSelectedFile() returns the selected folder, despite the name. getCurrentDirectory() returns the directory of the selected folder
-                    String path = chooser.getSelectedFile().getAbsolutePath() + "\\" + SHEET_DATEFORMAT.format(today.getTime()) + ".xls";
-                    FileOutputStream out = new FileOutputStream(new File(path));
+                    final String path = chooser.getSelectedFile().getAbsolutePath() + "\\" + SHEET_DATEFORMAT.format(today.getTime()) + ".xls";
+                    File workbookFile = new File(path);
+                    HSSFWorkbook workbook;
+                    if(workbookFile.exists()) {
+                        // Use a file
+                        FileInputStream in = new FileInputStream(workbookFile);
+                        workbook = new HSSFWorkbook(in);
+                    } else {
+                        workbook = new HSSFWorkbook();
+                    }
+                    writeExcelWorkbook(workbook, today);
+                    workbook.setActiveSheet(workbook.getNumberOfSheets()-1);
+                    FileOutputStream out = new FileOutputStream(workbookFile);
                     workbook.write(out);
                     out.close();
-                    System.out.println("Excel file written successfully at " + path + ".");
+                    final JDialog successDialog = new JDialog(this, "Success", true);
+                    JPanel successDialogPane = new JPanel();
+                    successDialogPane.setLayout(new BorderLayout());
+                    successDialogPane.add(new JLabel("Excel file written successfully at " + path + ".\n"), BorderLayout.CENTER);
+                    JButton openFileDialog = new JButton("Open it");
+                    openFileDialog.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            try {
+                                Desktop.getDesktop().open(new File(path));
+                            } catch (IOException e1) {
+                                JOptionPane.showMessageDialog(TimerFrame.this, "File could not be opened by associated software [" +e1.getLocalizedMessage()+"]. Please try manually.","Error",JOptionPane.ERROR_MESSAGE);
+                                e1.printStackTrace();
+                            }
+                            successDialog.dispose();
+                        }
+                    });
+                    successDialogPane.add(openFileDialog, BorderLayout.SOUTH);
+                    successDialog.setContentPane(successDialogPane);
+                    successDialog.pack();
+                    successDialog.setVisible(true);
                 } else {
-                    System.out.println("No folder selection.");
+                    JOptionPane.showMessageDialog(this, "File could not be written because no folder was selected. Please try again.","No valid folder selection",JOptionPane.WARNING_MESSAGE);
                 }
-
             } catch (FileNotFoundException e) {
+                JOptionPane.showMessageDialog(this, "File could not be written because folder was not found [" +e.getLocalizedMessage()+"]. Please try again.","No valid folder selection",JOptionPane.WARNING_MESSAGE);
                 e.printStackTrace();
             } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "File could not be written [" +e.getLocalizedMessage()+"]. Please report error and try again.","Error",JOptionPane.ERROR_MESSAGE);
                 e.printStackTrace();
             } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "An unexpected error happened [" +e.getLocalizedMessage()+"]. Please report error and try again.","Error",JOptionPane.ERROR_MESSAGE);
                 e.printStackTrace();
             }
         }
-    }
 
     protected void hideAccessoryStuff(boolean hide) {
         CLIENTTIME_DATEFORMAT = (hide && !alwaysShowFullFormat) ? CLIENTTIME_MINIMIZED_DATEFORMAT : CLIENTTIME_MAXIMIZED_DATEFORMAT;
